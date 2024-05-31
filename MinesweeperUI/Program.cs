@@ -6,28 +6,61 @@ namespace MinesweeperUI
 {
     internal class Program
     {
+        private static Grid _grid;
+        private static char[] _board;
+
         [STAThread]
         public static void Main(string[] args)
         {
-            var board = "  2f00000  2bB 113".PadRight(81, ' ');
-
             var app = new Application();
             var window = new Window();
+            _grid = CreateGrid();
+            CreateLabels(_grid, 81);
+            window.Content = _grid;
 
-            var boardPanel = CreateGrid();
+            _board = "  2f00000  2bB 113".PadRight(81, ' ').ToCharArray();
+            UpdateView();
 
-            for (var index = 0; index < board.Length; index++)
+            app.Run(window);
+        }
+
+        private static void CreateLabels(Grid boardPanel, int size)
+        {
+            for (var index = 0; index < size; index++)
             {
                 var col = index % 9;
                 var row = index / 9;
-                var content = board[index] switch
+                var button = new Button
+                {
+                    FontSize = 50,
+                };
+                button.Click += ButtonClick;
+                boardPanel.Children.Add(button);
+                Grid.SetColumn(button, col);
+                Grid.SetRow(button, row);
+            }
+        }
+
+        private static void ButtonClick(object sender, RoutedEventArgs e)
+        {
+            var button = (Button)sender;
+            var index = _grid.Children.IndexOf(button);
+            _board[index] = 'X';
+            UpdateView();
+        }
+
+        private static void UpdateView()
+        {
+            for (var index = 0; index < _grid.Children.Count; index++)
+            {
+                var content = _board[index] switch
                 {
                     'b' => "\ud83d\udca3",
                     'B' => "\ud83d\udca5",
                     'f' => "\u2691",
-                    _ => board[index].ToString()
+                    _ => _board[index].ToString()
                 };
-                var color = board[index] switch
+                var color = _board[index] switch
                 {
                     '1' => Color.FromRgb(50, 50, 200),
                     '2' => Color.FromRgb(0, 150, 0),
@@ -36,21 +69,12 @@ namespace MinesweeperUI
                     'f' => Color.FromRgb(100, 100, 100),
                     _ => Color.FromRgb(0, 0, 0),
                 };
-                var label = new Button
-                {
-                    Content = content,
-                    Foreground = new SolidColorBrush(color),
-                    FontSize = 50,
-                    IsEnabled = content == " ",
-                };
-                boardPanel.Children.Add(label);
-                Grid.SetColumn(label, col);
-                Grid.SetRow(label, row);
+                UIElement uiElement = _grid.Children[index];
+                var button = (Button)uiElement;
+                button.Content = content;
+                button.Foreground = new SolidColorBrush(color);
+                button.IsEnabled = content == " ";
             }
-
-            window.Content = boardPanel;
-
-            app.Run(window);
         }
 
         private static Grid CreateGrid()
